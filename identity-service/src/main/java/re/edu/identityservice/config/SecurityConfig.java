@@ -24,9 +24,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                // Cấu hình Stateless, không tạo Session
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/**", "/login", "/register").permitAll()
+                        // Cho phép truy cập tự do vào các API xác thực
+                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/test-token").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults());

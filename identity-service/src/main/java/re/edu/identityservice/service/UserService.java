@@ -1,12 +1,16 @@
 package re.edu.identityservice.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import re.edu.identityservice.dto.request.UserLoginRequest;
 import re.edu.identityservice.dto.request.UserRegisterRequest;
+import re.edu.identityservice.dto.response.TokenResponse;
 import re.edu.identityservice.dto.response.UserResponse;
 import re.edu.identityservice.entity.User;
 import re.edu.identityservice.repository.UserRepository;
+import re.edu.identityservice.util.AuthConstant;
 import re.edu.identityservice.util.JwtUtil;
 
 @Service
@@ -52,5 +56,22 @@ public class UserService {
 
         // Gọi util để tạo JWT
         return jwtUtil.generateToken(user);
+    }
+
+    public TokenResponse login(UserLoginRequest request) {
+        // 1. Tìm kiếm User trong Database
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new BadCredentialsException(AuthConstant.BAD_CREDENTIALS_MESSAGE));
+
+        // 2. So khớp mật khẩu thô với mật khẩu đã hash trong Database
+        boolean isPasswordMatch = passwordEncoder.matches(request.getPassword(), user.getPassword());
+
+        if (!isPasswordMatch) {
+            throw new BadCredentialsException(AuthConstant.BAD_CREDENTIALS_MESSAGE);
+        }
+
+        // 3. Nếu hợp lệ, cấp phát JWT
+        String token = jwtUtil.generateToken(user);
+        return new TokenResponse(token);
     }
 }
